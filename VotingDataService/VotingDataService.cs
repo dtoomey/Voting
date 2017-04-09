@@ -90,7 +90,7 @@ namespace VotingDataService
                         kvps.Add(new KeyValuePair<string, int>(items.Current.Key, items.Current.Value));
                     }
 
-                    kvps.Sort((x, y) => x.Value.CompareTo(y.Value) * -1);  // intentionally commented out!
+                    //kvps.Sort((x, y) => x.Value.CompareTo(y.Value) * -1);  // intentionally commented out!
                 }
                 await tx.CommitAsync();
             }

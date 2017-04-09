@@ -9,6 +9,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VotingService", "VotingServ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VotingDataService", "VotingDataService\VotingDataService.csproj", "{586454E0-15EF-4139-9E8D-BB336A90B177}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFolder", "SolutionFolder", "{BA14E817-008C-49B6-BB50-0CC3A9C7432B}"
+	ProjectSection(SolutionItems) = preProject
+		bootstrap.min.css = bootstrap.min.css
+		SF_PowerShellCommands.ps1 = SF_PowerShellCommands.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
