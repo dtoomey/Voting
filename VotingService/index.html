@@ -7,6 +7,7 @@
 
     <!-- Stylesheets -->
     <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+    <!--<link href="bootstrap.min.css" type="text/css" rel="stylesheet" />-->
 
     <!-- Application title and icons -->
     <title>Voting Service Lab Sample</title>
@@ -18,26 +19,53 @@
 
 </head>
 <body ng-controller="VotingAppController">
-    <div class="container-fluid">
+    <div class="container-fluid" style="width: 800px">
         <h1>Votes</h1>
         <div>
-            Add new voting item <input id="txtAdd" type="text" class="form-control" placeholder="Enter new voting term" ng-model="item" />
+            Add new voting item: <br />
+            <input id="txtAdd" type="text" class="form-control" placeholder="Enter new voting term" ng-model="item" style="width: 300px" />
             <button id="btnAdd" class="btn btn-primary" ng-click="add(item)">Add</button>
         </div>
         <br />
         <table class="table table-striped table-condensed table-hover">
             <thead>
                 <tr>
-                    <td>Voting Item</td>
-                    <td>Count</td>
-                    <td><button id="btnRefresh" class="btn btn-primary" ng-click="refresh()">Refresh</button></td>
+                    <th>Voting Item</th>
+                    <th>Count</th>
+                    <th><button id="btnRefresh" class="btn btn-primary" ng-click="refresh()">Refresh</button></th>
                 </tr>
             </thead>
-            <tr ng-repeat="vote in votes">
-                <td><button class="btn btn-primary" ng-click="add(vote.Key)">{{vote.Key}}</button></td>
-                <td>{{vote.Value}}</td>
-                <td><button class="btn btn-default" ng-click="remove(vote.Key)">Remove</button></td>
-            </tr>
+            <tbody>
+                <tr ng-repeat="vote in votes">
+                    <td><button class="btn btn-primary" ng-click="add(vote.Key)">{{vote.Key}}</button></td>
+                    <td>{{vote.Value}}</td>
+                    <td><button class="btn btn-default" ng-click="remove(vote.Key)">Remove</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <br />
+        <div>Total number of votes cast:  <b>{{totalVotes}}</b></div>
+        <br />
+        <table class="table table-condensed">
+            <thead>
+                <tr>
+                    <th>Service Name</th>
+                    <th>Version</th>
+                    <th>Instance Node</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>VotingService</td>
+                    <td>TBA</td>
+                    <td>TBA</td>
+                </tr>
+                <tr>
+                    <td>VotingDataService</td>
+                    <td>TBA</td>
+                    <td>TBA</td>
+                </tr>
+            </tbody>
         </table>
     </div>
 
@@ -62,9 +90,21 @@
                 $http.get('../api/votes')
                     .success(function (data, status) {
                         $scope.votes = data;
+                        $scope.refreshTotal();
+                        $scope.item = undefined;
                     })
                     .error(function (data, status) {
                         $scope.votes = undefined;
+                    });
+            };
+
+            $scope.refreshTotal = function () {
+                $http.get('../api/totalVotes')
+                    .success(function (data, status) {
+                        $scope.totalVotes = data;
+                    })
+                    .error(function (data, status) {
+                        $scope.totalVotes = 0;
                     });
             };
 

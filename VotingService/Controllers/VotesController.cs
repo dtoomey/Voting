@@ -38,7 +38,16 @@ namespace VotingService.Controllers
             try
             {
                 IVotingDataService client = GetRemotingClient();
+
+                //var votingData = new VotingData()
+                //{
+                //    VoteCounts = await client.GetAllVoteCounts(),
+                //    TotalVotes = await client.GetTotalNumberOfVotes()
+                //};
+
                 var votes = await client.GetAllVoteCounts();
+                //votes.Add(new KeyValuePair<string, int>("_totalRequests", (Int32)_requestCount));
+                //var requests = _requestCount;
 
                 var response = Request.CreateResponse(HttpStatusCode.OK, votes);
                 response.Headers.CacheControl = new CacheControlHeaderValue() { NoCache = true, MustRevalidate = true };
@@ -53,6 +62,35 @@ namespace VotingService.Controllers
             }
         }
 
+        // GET api/totalVotes 
+        [HttpGet]
+        [Route("api/totalVotes")]
+        public async Task<HttpResponseMessage> GetTotalVotes()
+        {
+            string activityId = Guid.NewGuid().ToString();
+            ServiceEventSource.Current.ServiceRequestStart("VotesController.GetTotalVotes", activityId);
+
+            Interlocked.Increment(ref _requestCount);
+
+            try
+            {
+                IVotingDataService client = GetRemotingClient();
+
+                var totalVotes = await client.GetTotalNumberOfVotes();
+
+                var response = Request.CreateResponse(HttpStatusCode.OK, totalVotes);
+                response.Headers.CacheControl = new CacheControlHeaderValue() { NoCache = true, MustRevalidate = true };
+
+                ServiceEventSource.Current.ServiceRequestStop("VotesController.GetTotalVotes", activityId);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                ServiceEventSource.Current.Message("Error in VotesController.GetTotalVotes method: {0}", ex.Message);
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
+            }
+        }
+
         [HttpPost]
         [Route("api/{key}")]
         public async Task<HttpResponseMessage> Post(string key)
@@ -61,7 +99,6 @@ namespace VotingService.Controllers
             ServiceEventSource.Current.ServiceRequestStart("VotesController.Post", activityId);
 
             Interlocked.Increment(ref _requestCount);
-
 
             IVotingDataService client = GetRemotingClient();
             await client.AddVote(key);

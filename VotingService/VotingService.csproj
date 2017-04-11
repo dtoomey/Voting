@@ -139,6 +139,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Controllers\VotesController.cs" />
     <Compile Include="OwinCommunicationListener.cs" />
+    <Compile Include="VotingData.cs" />
     <Compile Include="VotingService.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ServiceEventSource.cs" />
@@ -157,6 +158,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="bootstrap.min.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="index.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

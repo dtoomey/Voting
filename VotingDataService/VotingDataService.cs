@@ -73,6 +73,31 @@ namespace VotingDataService
             return result.HasValue ? result.Value : 0;
         }
 
+        public async Task<long> GetTotalNumberOfVotes()
+        {
+            ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.GetTotalNumberOfVotes start.");
+            long result = 0;
+
+            using (ITransaction tx = StateManager.CreateTransaction())
+            {
+                if (voteDictionary != null)
+                {
+                    IAsyncEnumerable<KeyValuePair<string, int>> e = await voteDictionary.CreateEnumerableAsync(tx);
+                    IAsyncEnumerator<KeyValuePair<string, int>> items = e.GetAsyncEnumerator();
+
+                    while (await items.MoveNextAsync(new CancellationToken()))
+                    {
+                        result += (long)items.Current.Value;
+                    }
+
+                    await tx.CommitAsync();
+                }
+            }
+
+            ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.GetTotalNumberOfVotes end.");
+            return result;
+        }
+
         public async Task<List<KeyValuePair<string, int>>> GetAllVoteCounts()
         {
             ServiceEventSource.Current.Message("VotingDataService.GetAllVoteCounts start.");

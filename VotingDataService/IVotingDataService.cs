@@ -11,6 +11,8 @@ namespace VotingDataService
 
         Task<int> GetNumberOfVotes(string voteItem);
 
+        Task<long> GetTotalNumberOfVotes();
+
         Task<List<KeyValuePair<string, int>>> GetAllVoteCounts();
     }
 }
