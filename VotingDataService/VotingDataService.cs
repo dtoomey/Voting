@@ -16,6 +16,8 @@ namespace VotingDataService
     public sealed class VotingDataService : StatefulService, IVotingDataService
     {
         IReliableDictionary<string, int> voteDictionary = null;  //NEW
+        IReliableDictionary<string, long> votesCastDictionary = null;
+        public const string VOTES_CAST_KEY = "TotalVotesCast";
 
         public VotingDataService(StatefulServiceContext context)
             : base(context)
@@ -26,11 +28,14 @@ namespace VotingDataService
         {
             ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.AddVote start. voteItem='{0}'", voteItem);
             int result = 0;
+            long result2 = 0;
 
             using (ITransaction tx = StateManager.CreateTransaction())
             {
                 voteDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, int>>("voteDictionary");
+                votesCastDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("votesCastDictionary");
                 result = await voteDictionary.AddOrUpdateAsync(tx, voteItem, 1, (key, value) => ++value);
+                result2 = await votesCastDictionary.AddOrUpdateAsync(tx, VOTES_CAST_KEY, 1, (key, value) => ++value);
                 await tx.CommitAsync();
             }
 
@@ -47,7 +52,9 @@ namespace VotingDataService
             {
                 if (voteDictionary != null)
                 {
+                    ConditionalValue<int> deleteVotes = await voteDictionary.TryGetValueAsync(tx, voteItem);
                     result = await voteDictionary.TryRemoveAsync(tx, voteItem);
+                    await votesCastDictionary.AddOrUpdateAsync(tx, VOTES_CAST_KEY, -1, (key, value) => (value - deleteVotes.Value));
                     await tx.CommitAsync();
                 }
             }
@@ -76,26 +83,19 @@ namespace VotingDataService
         public async Task<long> GetTotalNumberOfVotes()
         {
             ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.GetTotalNumberOfVotes start.");
-            long result = 0;
+            ConditionalValue<long> result = new ConditionalValue<long>(true, 0);
 
             using (ITransaction tx = StateManager.CreateTransaction())
             {
-                if (voteDictionary != null)
+                if (votesCastDictionary != null)
                 {
-                    IAsyncEnumerable<KeyValuePair<string, int>> e = await voteDictionary.CreateEnumerableAsync(tx);
-                    IAsyncEnumerator<KeyValuePair<string, int>> items = e.GetAsyncEnumerator();
-
-                    while (await items.MoveNextAsync(new CancellationToken()))
-                    {
-                        result += (long)items.Current.Value;
-                    }
-
+                    result = await votesCastDictionary.TryGetValueAsync(tx, VOTES_CAST_KEY);
                     await tx.CommitAsync();
                 }
             }
 
             ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.GetTotalNumberOfVotes end.");
-            return result;
+            return result.HasValue ? result.Value : 0;
         }
 
         public async Task<List<KeyValuePair<string, int>>> GetAllVoteCounts()
