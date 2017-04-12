@@ -7,6 +7,8 @@ using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
 using Microsoft.ServiceFabric.Services.Remoting.Runtime;
 using Microsoft.ServiceFabric.Data;
+using System.Fabric.Health;
+using System;
 
 namespace VotingDataService
 {
@@ -36,6 +38,7 @@ namespace VotingDataService
                 votesCastDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("votesCastDictionary");
                 result = await voteDictionary.AddOrUpdateAsync(tx, voteItem, 1, (key, value) => ++value);
                 result2 = await votesCastDictionary.AddOrUpdateAsync(tx, VOTES_CAST_KEY, 1, (key, value) => ++value);
+                //if (!string.IsNullOrEmpty(voteItem) && voteItem.ToUpper().StartsWith("TRUMP")) await voteDictionary.AddOrUpdateAsync(tx, voteItem, 1, (key, value) => value += 10);
                 await tx.CommitAsync();
             }
 
@@ -54,7 +57,7 @@ namespace VotingDataService
                 {
                     ConditionalValue<int> deleteVotes = await voteDictionary.TryGetValueAsync(tx, voteItem);
                     result = await voteDictionary.TryRemoveAsync(tx, voteItem);
-                    await votesCastDictionary.AddOrUpdateAsync(tx, VOTES_CAST_KEY, -1, (key, value) => (value - deleteVotes.Value));
+                    await votesCastDictionary.AddOrUpdateAsync(tx, VOTES_CAST_KEY, -1, (key, value) => (value >= deleteVotes.Value ? value - deleteVotes.Value : 0));
                     await tx.CommitAsync();
                 }
             }
@@ -124,6 +127,33 @@ namespace VotingDataService
             return kvps;
         }
 
+        private async void CheckVotesIntegrity()
+        {
+            long totalVotesAcrossItems = 0;
+            long totalVotesCast = 0;
+
+            using (ITransaction tx = StateManager.CreateTransaction())
+            {
+                totalVotesCast = await GetTotalNumberOfVotes();
+                var voteItems = await GetAllVoteCounts();
+
+                foreach (var item in voteItems)
+                {
+                    totalVotesAcrossItems += item.Value;
+                }
+
+                if (totalVotesCast != totalVotesAcrossItems)
+                {
+                    HealthInformation healthInformation = new HealthInformation("ServiceCode", "StateDictionary", HealthState.Error);
+                    healthInformation.Description = string.Format("Total votes across items [{0}] does not equal total votes cast [{1}].", totalVotesAcrossItems.ToString(), totalVotesCast.ToString());
+                    healthInformation.TimeToLive = TimeSpan.FromSeconds(15);
+                    this.Partition.ReportReplicaHealth(healthInformation);
+                }
+
+                await tx.CommitAsync();
+            }
+        }
+
         /// <summary>
         /// Optional override to create listeners (e.g., HTTP, Service Remoting, WCF, etc.) for this service replica to handle client or user requests.
         /// </summary>
@@ -143,34 +173,36 @@ namespace VotingDataService
         /// This method executes when this replica of your service becomes primary and has write status.
         /// </summary>
         /// <param name="cancellationToken">Canceled when Service Fabric needs to shut down this service replica.</param>
-        //protected override async Task RunAsync(CancellationToken cancellationToken)
-        //{
-        //    // TODO: Replace the following sample code with your own logic 
-        //    //       or remove this RunAsync override if it's not needed in your service.
+        protected override async Task RunAsync(CancellationToken cancellationToken)
+        {
+            // TODO: Replace the following sample code with your own logic 
+            //       or remove this RunAsync override if it's not needed in your service.
 
-        //    //var myDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, int>>("myDictionary");
+            //var myDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, int>>("myDictionary");
 
-        //    while (true)
-        //    {
-        //        cancellationToken.ThrowIfCancellationRequested();
-        //        ServiceEventSource.Current.Message("I'm here!!");
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                //ServiceEventSource.Current.Message("I'm here!!");
 
-        //        //using (var tx = this.StateManager.CreateTransaction())
-        //        //{
-        //        //    var result = await myDictionary.TryGetValueAsync(tx, "Counter");
+                //using (var tx = this.StateManager.CreateTransaction())
+                //{
+                //    var result = await myDictionary.TryGetValueAsync(tx, "Counter");
 
-        //        //    ServiceEventSource.Current.ServiceMessage(this.Context, "Current Counter Value: {0}",
-        //        //        result.HasValue ? result.Value.ToString() : "Value does not exist.");
+                //    ServiceEventSource.Current.ServiceMessage(this.Context, "Current Counter Value: {0}",
+                //        result.HasValue ? result.Value.ToString() : "Value does not exist.");
 
-        //        //    await myDictionary.AddOrUpdateAsync(tx, "Counter", 0, (key, value) => ++value);
+                //    await myDictionary.AddOrUpdateAsync(tx, "Counter", 0, (key, value) => ++value);
 
-        //        //    // If an exception is thrown before calling CommitAsync, the transaction aborts, all changes are 
-        //        //    // discarded, and nothing is saved to the secondary replicas.
-        //        //    await tx.CommitAsync();
-        //        //}
+                //    // If an exception is thrown before calling CommitAsync, the transaction aborts, all changes are 
+                //    // discarded, and nothing is saved to the secondary replicas.
+                //    await tx.CommitAsync();
+                //}
 
-        //        await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
-        //    }
-        //}
+                //CheckVotesIntegrity();
+
+                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+            }
+        }
     }
 }
