@@ -16,6 +16,7 @@ namespace VotingService.Controllers
     using System.Threading.Tasks;
     using Microsoft.ServiceFabric.Services.Client;
     using VotingDataService;
+    using System.Fabric;
 
     public class VotesController : ApiController
     {
@@ -39,15 +40,7 @@ namespace VotingService.Controllers
             {
                 IVotingDataService client = GetRemotingClient();
 
-                //var votingData = new VotingData()
-                //{
-                //    VoteCounts = await client.GetAllVoteCounts(),
-                //    TotalVotes = await client.GetTotalNumberOfVotes()
-                //};
-
                 var votes = await client.GetAllVoteCounts();
-                //votes.Add(new KeyValuePair<string, int>("_totalRequests", (Int32)_requestCount));
-                //var requests = _requestCount;
 
                 var response = Request.CreateResponse(HttpStatusCode.OK, votes);
                 response.Headers.CacheControl = new CacheControlHeaderValue() { NoCache = true, MustRevalidate = true };
@@ -89,6 +82,48 @@ namespace VotingService.Controllers
                 ServiceEventSource.Current.Message("Error in VotesController.GetTotalVotes method: {0}", ex.Message);
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
             }
+
+            var applicationName = new Uri("fabric:/Voting");
+            using (var client = new FabricClient())
+            {
+                var applications = await client.QueryManager.GetApplicationListAsync(applicationName).ConfigureAwait(false);
+                var version = applications[0].ApplicationTypeVersion;
+            }
+        }
+
+        // GET api/appVersion 
+        [HttpGet]
+        [Route("api/appVersion")]
+        public async Task<HttpResponseMessage> GetAppVersion()
+        {
+            string activityId = Guid.NewGuid().ToString();
+            ServiceEventSource.Current.ServiceRequestStart("VotesController.GetAppVersion", activityId);
+
+            Interlocked.Increment(ref _requestCount);
+
+            string version;
+
+            try
+            {
+                var applicationName = new Uri("fabric:/Voting");
+                using (var client = new FabricClient())
+                {
+                    var applications = await client.QueryManager.GetApplicationListAsync(applicationName).ConfigureAwait(false);
+                    version = applications[0].ApplicationTypeVersion;
+                }
+
+                var response = Request.CreateResponse(HttpStatusCode.OK, version);
+                response.Headers.CacheControl = new CacheControlHeaderValue() { NoCache = true, MustRevalidate = true };
+
+                ServiceEventSource.Current.ServiceRequestStop("VotesController.GetAppVersion", activityId);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                ServiceEventSource.Current.Message("Error in VotesController.GetAppVersion method: {0}", ex.Message);
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
+            }
+
         }
 
         [HttpPost]

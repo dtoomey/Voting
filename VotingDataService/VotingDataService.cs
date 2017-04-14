@@ -146,7 +146,12 @@ namespace VotingDataService
                 {
                     HealthInformation healthInformation = new HealthInformation("ServiceCode", "StateDictionary", HealthState.Error);
                     healthInformation.Description = string.Format("Total votes across items [{0}] does not equal total votes cast [{1}].", totalVotesAcrossItems.ToString(), totalVotesCast.ToString());
-                    healthInformation.TimeToLive = TimeSpan.FromSeconds(15);
+                    //healthInformation.TimeToLive = TimeSpan.FromSeconds(15);
+                    this.Partition.ReportReplicaHealth(healthInformation);
+                }
+                else
+                {
+                    HealthInformation healthInformation = new HealthInformation("ServiceCode", "StateDictionary", HealthState.Ok);
                     this.Partition.ReportReplicaHealth(healthInformation);
                 }
 
@@ -201,7 +206,7 @@ namespace VotingDataService
 
                 //CheckVotesIntegrity();
 
-                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
             }
         }
     }
