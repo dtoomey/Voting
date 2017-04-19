@@ -47,7 +47,7 @@
         </table>
         <br />
         <hr />
-        <div>Total number of votes cast:  <span class="lead">&nbsp;&nbsp;&nbsp;{{totalVotes}}</span></div>
+        <div>Total number of ballots cast:  <span class="lead">&nbsp;&nbsp;&nbsp;{{totalBallots}}</span></div>
         <br />
         
         <div><hr /><span class="small"><em>Application Version: {{appVersion}}</em></span></div>
@@ -105,12 +105,12 @@
             };
 
             $scope.refreshTotal = function () {
-                $http.get('../api/totalVotes')
+                $http.get('../api/ballots')
                     .success(function (data, status) {
-                        $scope.totalVotes = data;
+                        $scope.totalBallots = data;
                     })
                     .error(function (data, status) {
-                        $scope.totalVotes = 0;
+                        $scope.totalBallots = 0;
                     });
             };
 

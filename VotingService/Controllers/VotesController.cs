@@ -57,11 +57,11 @@ namespace VotingService.Controllers
 
         // GET api/totalVotes 
         [HttpGet]
-        [Route("api/totalVotes")]
-        public async Task<HttpResponseMessage> GetTotalVotes()
+        [Route("api/ballots")]
+        public async Task<HttpResponseMessage> GetTotalBallots()
         {
             string activityId = Guid.NewGuid().ToString();
-            ServiceEventSource.Current.ServiceRequestStart("VotesController.GetTotalVotes", activityId);
+            ServiceEventSource.Current.ServiceRequestStart("VotesController.GetTotalBallots", activityId);
 
             Interlocked.Increment(ref _requestCount);
 
@@ -69,17 +69,17 @@ namespace VotingService.Controllers
             {
                 IVotingDataService client = GetRemotingClient();
 
-                var totalVotes = await client.GetTotalNumberOfVotes();
+                var totalBallots = await client.GetTotalBallotsCast();
 
-                var response = Request.CreateResponse(HttpStatusCode.OK, totalVotes);
+                var response = Request.CreateResponse(HttpStatusCode.OK, totalBallots);
                 response.Headers.CacheControl = new CacheControlHeaderValue() { NoCache = true, MustRevalidate = true };
 
-                ServiceEventSource.Current.ServiceRequestStop("VotesController.GetTotalVotes", activityId);
+                ServiceEventSource.Current.ServiceRequestStop("VotesController.GetTotalBallots", activityId);
                 return response;
             }
             catch (Exception ex)
             {
-                ServiceEventSource.Current.Message("Error in VotesController.GetTotalVotes method: {0}", ex.Message);
+                ServiceEventSource.Current.Message("Error in VotesController.GetTotalBallots method: {0}", ex.Message);
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
             }
 

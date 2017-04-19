@@ -18,8 +18,8 @@ namespace VotingDataService
     public sealed class VotingDataService : StatefulService, IVotingDataService
     {
         IReliableDictionary<string, int> voteDictionary = null;  //NEW
-        IReliableDictionary<string, long> votesCastDictionary = null;
-        public const string VOTES_CAST_KEY = "TotalVotesCast";
+        IReliableDictionary<string, long> ballotDictionary = null;
+        public const string BALLOTS_CAST_KEY = "TotalBallotsCast";
 
         public VotingDataService(StatefulServiceContext context)
             : base(context)
@@ -35,10 +35,9 @@ namespace VotingDataService
             using (ITransaction tx = StateManager.CreateTransaction())
             {
                 voteDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, int>>("voteDictionary");
-                votesCastDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("votesCastDictionary");
+                ballotDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("votesCastDictionary");
                 result = await voteDictionary.AddOrUpdateAsync(tx, voteItem, 1, (key, value) => ++value);
-                result2 = await votesCastDictionary.AddOrUpdateAsync(tx, VOTES_CAST_KEY, 1, (key, value) => ++value);
-                //if (!string.IsNullOrEmpty(voteItem) && voteItem.ToUpper().StartsWith("TRUMP")) await voteDictionary.AddOrUpdateAsync(tx, voteItem, 1, (key, value) => value += 10);
+                result2 = await ballotDictionary.AddOrUpdateAsync(tx, BALLOTS_CAST_KEY, 1, (key, value) => ++value);
                 await tx.CommitAsync();
             }
 
@@ -57,7 +56,7 @@ namespace VotingDataService
                 {
                     ConditionalValue<int> deleteVotes = await voteDictionary.TryGetValueAsync(tx, voteItem);
                     result = await voteDictionary.TryRemoveAsync(tx, voteItem);
-                    await votesCastDictionary.AddOrUpdateAsync(tx, VOTES_CAST_KEY, -1, (key, value) => (value >= deleteVotes.Value ? value - deleteVotes.Value : 0));
+                    await ballotDictionary.AddOrUpdateAsync(tx, BALLOTS_CAST_KEY, -1, (key, value) => (value >= deleteVotes.Value ? value - deleteVotes.Value : 0));
                     await tx.CommitAsync();
                 }
             }
@@ -83,21 +82,21 @@ namespace VotingDataService
             return result.HasValue ? result.Value : 0;
         }
 
-        public async Task<long> GetTotalNumberOfVotes()
+        public async Task<long> GetTotalBallotsCast()
         {
-            ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.GetTotalNumberOfVotes start.");
+            ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.GetTotalBallotsCast start.");
             ConditionalValue<long> result = new ConditionalValue<long>(true, 0);
 
             using (ITransaction tx = StateManager.CreateTransaction())
             {
-                if (votesCastDictionary != null)
+                if (ballotDictionary != null)
                 {
-                    result = await votesCastDictionary.TryGetValueAsync(tx, VOTES_CAST_KEY);
+                    result = await ballotDictionary.TryGetValueAsync(tx, BALLOTS_CAST_KEY);
                     await tx.CommitAsync();
                 }
             }
 
-            ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.GetTotalNumberOfVotes end.");
+            ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.GetTotalBallotsCast end.");
             return result.HasValue ? result.Value : 0;
         }
 
@@ -130,11 +129,11 @@ namespace VotingDataService
         private async void CheckVotesIntegrity()
         {
             long totalVotesAcrossItems = 0;
-            long totalVotesCast = 0;
+            long totalBallotsCast = 0;
 
             using (ITransaction tx = StateManager.CreateTransaction())
             {
-                totalVotesCast = await GetTotalNumberOfVotes();
+                totalBallotsCast = await GetTotalBallotsCast();
                 var voteItems = await GetAllVoteCounts();
 
                 foreach (var item in voteItems)
@@ -142,10 +141,10 @@ namespace VotingDataService
                     totalVotesAcrossItems += item.Value;
                 }
 
-                if (totalVotesCast != totalVotesAcrossItems)
+                if (totalBallotsCast != totalVotesAcrossItems)
                 {
                     HealthInformation healthInformation = new HealthInformation("ServiceCode", "StateDictionary", HealthState.Error);
-                    healthInformation.Description = string.Format("Total votes across items [{0}] does not equal total votes cast [{1}].", totalVotesAcrossItems.ToString(), totalVotesCast.ToString());
+                    healthInformation.Description = string.Format("Total votes across items [{0}] does not equal total ballots cast [{1}].", totalVotesAcrossItems.ToString(), totalBallotsCast.ToString());
                     //healthInformation.TimeToLive = TimeSpan.FromSeconds(15);
                     this.Partition.ReportReplicaHealth(healthInformation);
                 }
