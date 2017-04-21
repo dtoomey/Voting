@@ -35,7 +35,7 @@ namespace VotingDataService
             using (ITransaction tx = StateManager.CreateTransaction())
             {
                 voteDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, int>>("voteDictionary");
-                ballotDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("votesCastDictionary");
+                ballotDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("ballotDictionary");
                 result = await voteDictionary.AddOrUpdateAsync(tx, voteItem, 1, (key, value) => ++value);
                 result2 = await ballotDictionary.AddOrUpdateAsync(tx, BALLOTS_CAST_KEY, 1, (key, value) => ++value);
                 await tx.CommitAsync();
