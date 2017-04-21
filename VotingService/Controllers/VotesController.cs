@@ -82,13 +82,6 @@ namespace VotingService.Controllers
                 ServiceEventSource.Current.Message("Error in VotesController.GetTotalBallots method: {0}", ex.Message);
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
             }
-
-            var applicationName = new Uri("fabric:/Voting");
-            using (var client = new FabricClient())
-            {
-                var applications = await client.QueryManager.GetApplicationListAsync(applicationName).ConfigureAwait(false);
-                var version = applications[0].ApplicationTypeVersion;
-            }
         }
 
         // GET api/appVersion 

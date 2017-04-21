@@ -34,8 +34,6 @@ namespace VotingDataService
 
             using (ITransaction tx = StateManager.CreateTransaction())
             {
-                voteDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, int>>("voteDictionary");
-                ballotDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("ballotDictionary");
                 result = await voteDictionary.AddOrUpdateAsync(tx, voteItem, 1, (key, value) => ++value);
                 result2 = await ballotDictionary.AddOrUpdateAsync(tx, BALLOTS_CAST_KEY, 1, (key, value) => ++value);
                 await tx.CommitAsync();
@@ -183,6 +181,9 @@ namespace VotingDataService
             //       or remove this RunAsync override if it's not needed in your service.
 
             //var myDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, int>>("myDictionary");
+
+            voteDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, int>>("voteDictionary");
+            ballotDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("ballotDictionary");
 
             while (true)
             {
