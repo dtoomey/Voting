@@ -12,7 +12,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFolder", "SolutionFolder", "{BA14E817-008C-49B6-BB50-0CC3A9C7432B}"
 	ProjectSection(SolutionItems) = preProject
 		bootstrap.min.css = bootstrap.min.css
-		SF_PowerShellCommands.ps1 = SF_PowerShellCommands.ps1
+		SF_DeployApplication.ps1 = SF_DeployApplication.ps1
+		SF_UndeployApplication.ps1 = SF_UndeployApplication.ps1
 	EndProjectSection
 EndProject
 Global

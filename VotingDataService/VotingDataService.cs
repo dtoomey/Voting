@@ -180,29 +180,12 @@ namespace VotingDataService
             // TODO: Replace the following sample code with your own logic 
             //       or remove this RunAsync override if it's not needed in your service.
 
-            //var myDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, int>>("myDictionary");
-
             voteDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, int>>("voteDictionary");
             ballotDictionary = await StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("ballotDictionary");
 
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                //ServiceEventSource.Current.Message("I'm here!!");
-
-                //using (var tx = this.StateManager.CreateTransaction())
-                //{
-                //    var result = await myDictionary.TryGetValueAsync(tx, "Counter");
-
-                //    ServiceEventSource.Current.ServiceMessage(this.Context, "Current Counter Value: {0}",
-                //        result.HasValue ? result.Value.ToString() : "Value does not exist.");
-
-                //    await myDictionary.AddOrUpdateAsync(tx, "Counter", 0, (key, value) => ++value);
-
-                //    // If an exception is thrown before calling CommitAsync, the transaction aborts, all changes are 
-                //    // discarded, and nothing is saved to the secondary replicas.
-                //    await tx.CommitAsync();
-                //}
 
                 //CheckVotesIntegrity();
 

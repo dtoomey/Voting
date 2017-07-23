@@ -1,23 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Net.Http.Headers;
 using System.Web.Http;
+using Microsoft.ServiceFabric.Services.Remoting.Client;
+using Microsoft.ServiceFabric.Services.Client;
+using VotingDataService;
+using System.Fabric;
 
 namespace VotingService.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Net;
-    using System.Net.Http;
-    using System.Threading;
-    using System.Net.Http.Headers;
-    using System.Web.Http;
-
-    using Microsoft.ServiceFabric.Services.Remoting.Client;
-    using System.Threading.Tasks;
-    using Microsoft.ServiceFabric.Services.Client;
-    using VotingDataService;
-    using System.Fabric;
-
     public class VotesController : ApiController
     {
         private const string REMOTING_URI = "fabric:/Voting/VotingDataService";
