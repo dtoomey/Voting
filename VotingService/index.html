@@ -51,27 +51,6 @@
         <br />
         
         <div><hr /><span class="small"><em>Application Version: {{appVersion}}</em></span></div>
-        <!--<table class="table table-condensed">
-            <thead>
-                <tr>
-                    <th>Service Name</th>
-                    <th>Version</th>
-                    <th>Instance Node</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>VotingService</td>
-                    <td>TBA</td>
-                    <td>TBA</td>
-                </tr>
-                <tr>
-                    <td>VotingDataService</td>
-                    <td>TBA</td>
-                    <td>TBA</td>
-                </tr>
-            </tbody>
-        </table>-->
     </div>
 
     <!-- 3rd party libraries -->
@@ -120,7 +99,7 @@
                         $scope.appVersion = data;
                     })
                     .error(function (data, status) {
-                        $scope.appVersion = "<unknown>";
+                        $scope.appVersion = "[unknown]";
                     });
             };
 
