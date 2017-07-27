@@ -6,10 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using System.Web.Http;
+using System.Fabric;
 using Microsoft.ServiceFabric.Services.Remoting.Client;
 using Microsoft.ServiceFabric.Services.Client;
 using VotingDataService;
-using System.Fabric;
 
 namespace VotingService.Controllers
 {
