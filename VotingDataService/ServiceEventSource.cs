@@ -6,12 +6,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.ServiceFabric.Services.Runtime;
+using EventLogger;
 
 namespace VotingDataService
 {
     [EventSource(Name = "MyCompany-Voting-VotingDataService")]
     internal sealed class ServiceEventSource : EventSource
     {
+        #region EventGrid - Declare local config variables
+        private static string TOPIC_ENDPOINT = "";
+        private static string TOPIC_KEY = "";
+        private static bool CONFIG_INITALISED = false;
+        #endregion
+
         public static readonly ServiceEventSource Current = new ServiceEventSource();
 
         static ServiceEventSource()
@@ -23,6 +30,36 @@ namespace VotingDataService
 
         // Instance constructor is private to enforce singleton semantics
         private ServiceEventSource() : base() { }
+
+        #region EventGrid Custom Methods 
+
+        [NonEvent]
+        private void InitiatiseConfig(StatefulServiceContext serviceContext)
+        {
+            if (!CONFIG_INITALISED)
+            {
+                var configurationPackage = serviceContext.CodePackageActivationContext.GetConfigurationPackageObject("Config");
+                TOPIC_ENDPOINT = configurationPackage.Settings.Sections["LoggingConfig"].Parameters["TopicEndpoint"].Value;
+                TOPIC_KEY = configurationPackage.Settings.Sections["LoggingConfig"].Parameters["TopicKey"].Value;
+                CONFIG_INITALISED = true;
+                Current.ServiceMessage(serviceContext, "EventGrid config initialised. Topic endpoint: '{0}'", TOPIC_ENDPOINT);
+            }
+        }
+
+        [NonEvent]
+        public async void ServiceMessageWithEventGrid(LogEventType eventType, string methodName, StatefulServiceContext serviceContext, string message, params object[] args)
+        {
+            Current.ServiceMessage(serviceContext, message, args);
+
+            InitiatiseConfig(serviceContext);
+
+            string applicationName = serviceContext.CodePackageActivationContext.ApplicationName;
+            string componentName = serviceContext.ServiceName.ToString();
+            string safeMessage = args == null ? message : string.Format(message, args);
+
+            await Utility.SendLogEvent(applicationName, eventType, safeMessage, componentName, methodName, TOPIC_ENDPOINT, TOPIC_KEY);
+        }
+        #endregion
 
         #region Keywords
         // Event keywords can be used to categorize events. 

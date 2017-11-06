@@ -8,9 +8,8 @@
   <Section Name="ReplicatorSecurityConfig" />
 
   <!-- Add your custom configuration sections and parameters here. -->
-  <!--
-  <Section Name="MyConfigSection">
-    <Parameter Name="MyParameter" Value="Value1" />
+  <Section Name="LoggingConfig">
+    <Parameter Name="TopicEndpoint" Value="" MustOverride="true"/>
+    <Parameter Name="TopicKey" Value="" MustOverride="true" />
   </Section>
-  -->
 </Settings>

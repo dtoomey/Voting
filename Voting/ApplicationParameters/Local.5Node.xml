@@ -5,5 +5,7 @@
     <Parameter Name="VotingDataService_MinReplicaSetSize" Value="3" />
     <Parameter Name="VotingDataService_TargetReplicaSetSize" Value="3" />
     <Parameter Name="VotingService_InstanceCount" Value="1" />
+    <Parameter Name="TopicEndpoint" Value="https://eglogeventstopic.westus2-1.eventgrid.azure.net/api/events" />
+    <Parameter Name="TopicKey" Value="t7oHesz4ALAEiNpapVmIiIaPVA7F3RzLSVyXc1crG/0=" />
   </Parameters>
 </Application>

@@ -5,13 +5,24 @@
     <Parameter Name="VotingDataService_PartitionCount" DefaultValue="1" />
     <Parameter Name="VotingDataService_TargetReplicaSetSize" DefaultValue="3" />
     <Parameter Name="VotingService_InstanceCount" DefaultValue="1" />
+    <Parameter Name="TopicEndpoint" DefaultValue="" />
+    <Parameter Name="TopicKey" DefaultValue="" />
   </Parameters>
   <!-- Import the ServiceManifest from the ServicePackage. The ServiceManifestName and ServiceManifestVersion 
        should match the Name and Version attributes of the ServiceManifest element defined in the 
        ServiceManifest.xml file. -->
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="VotingDataServicePkg" ServiceManifestVersion="1.0.0" />
-    <ConfigOverrides />
+    <ConfigOverrides>
+      <ConfigOverride Name="Config">
+        <Settings>
+          <Section Name="LoggingConfig">
+            <Parameter Name="TopicEndpoint" Value="[TopicEndpoint]" />
+            <Parameter Name="TopicKey" Value="[TopicKey]" />
+          </Section>
+        </Settings>
+      </ConfigOverride>
+    </ConfigOverrides>
   </ServiceManifestImport>
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="VotingServicePkg" ServiceManifestVersion="1.0.0" />

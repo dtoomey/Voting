@@ -9,6 +9,7 @@ using Microsoft.ServiceFabric.Services.Remoting.Runtime;
 using Microsoft.ServiceFabric.Data;
 using System.Fabric.Health;
 using System;
+using EventLogger;
 
 namespace VotingDataService
 {
@@ -28,23 +29,40 @@ namespace VotingDataService
         // NEW
         public async Task<int> AddVote(string voteItem)
         {
-            ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.AddVote start. voteItem='{0}'", voteItem);
             int result = 0;
             long result2 = 0;
 
-            using (ITransaction tx = StateManager.CreateTransaction())
+            try
             {
-                result = await voteDictionary.AddOrUpdateAsync(tx, voteItem, 1, (key, value) => ++value);
-                result2 = await ballotDictionary.AddOrUpdateAsync(tx, BALLOTS_CAST_KEY, 1, (key, value) => ++value);
+                if (string.IsNullOrEmpty(voteItem) || voteItem.ToUpper() == "UNDEFINED")
+                {
+                    throw new ApplicationException("Vote item is undefined.");
+                }
 
-                //Uncomment to introduce a dodgy bug
-                //if (!string.IsNullOrEmpty(voteItem) && voteItem.ToUpper().StartsWith("TRUMP")) await voteDictionary.AddOrUpdateAsync(tx, voteItem, 1, (key, value) => value += 10);
+                //ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.AddVote start. voteItem='{0}'", voteItem);
+                ServiceEventSource.Current.ServiceMessageWithEventGrid(LogEventType.VERBOSE, "AddVote", this.Context, "VotingDataService.AddVote start. voteItem='{0}'", voteItem);
 
-                await tx.CommitAsync();
+                using (ITransaction tx = StateManager.CreateTransaction())
+                {
+                    result = await voteDictionary.AddOrUpdateAsync(tx, voteItem, 1, (key, value) => ++value);
+                    result2 = await ballotDictionary.AddOrUpdateAsync(tx, BALLOTS_CAST_KEY, 1, (key, value) => ++value);
+
+                    //Uncomment to introduce a VERY dodgy bug
+                    //if (!string.IsNullOrEmpty(voteItem) && voteItem.ToUpper().StartsWith("TRUMP")) await voteDictionary.AddOrUpdateAsync(tx, voteItem, 1, (key, value) => value += 10);
+
+                    await tx.CommitAsync();
+                }
+
+                //ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.AddVote end. Total votes: {0}", result.ToString());
+                ServiceEventSource.Current.ServiceMessageWithEventGrid(LogEventType.INFO, "AddVote", this.Context, "VotingDataService.AddVote end. Total votes: {0}", result.ToString());
+                return result;
             }
-
-            ServiceEventSource.Current.ServiceMessage(this.Context, "VotingDataService.AddVote end. Total votes: {0}", result.ToString());
-            return result;
+            catch (Exception ex)
+            {
+                string logMsg = $"{ex.GetType().Name}: {ex.Message}";
+                ServiceEventSource.Current.ServiceMessageWithEventGrid(LogEventType.ERROR, "AddVote", this.Context, logMsg, result);
+                return result;
+            }
         }
 
         public async Task<int> DeleteVoteItem(string voteItem)
